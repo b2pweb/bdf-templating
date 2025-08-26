@@ -28,12 +28,12 @@
   "require-dev": {
     "psr/container": "~1.0|~2.0",
     "psr/event-dispatcher": "~1.0",
-    "symfony/http-kernel": "~7.0",
-    "symfony/asset": "~7.0",
-    "symfony/translation": "~7.0",
-    "symfony/routing": "~7.0",
+    "symfony/http-kernel": "~6.0|~7.0",
+    "symfony/asset": "~6.0|~7.0",
+    "symfony/translation": "~6.0|~7.0",
+    "symfony/routing": "~6.0|~7.0",
     "phpunit/phpunit": "~10.0",
     "php-di/php-di": "dev-master",
-    "symfony/framework-bundle": "7.4.x-dev"
+    "symfony/framework-bundle": "~6.0|~7.0"
   }
 }
