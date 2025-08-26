@@ -327,9 +327,10 @@ class PhpEngineTest extends TestCase
         $fragmentRenderer->expects($this->once())->method('render')->with('/path', $this->isInstanceOf(Request::class), ['ignore_errors' => true])->willReturn(new Response('fragment content'));
         $fragmentRenderer->expects($this->once())->method('getName')->willReturn('inline');
         $fragmentHandler = new FragmentHandler(
-            new RequestStack([Request::createFromGlobals()]),
+            $rs = new RequestStack(),
             [$fragmentRenderer],
         );
+        $rs->push(Request::createFromGlobals());
         $this->engine = new PhpEngine(
             $this->di,
             $this->resolver,

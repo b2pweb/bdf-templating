@@ -27,10 +27,12 @@ class UrlTest extends TestCase
             [
                 new Url(
                     self::createUrlGenerator(),
-                    new RequestStack([$this->request = Request::create('http://example.com/base/path?foo=bar')])
+                    $rs = new RequestStack()
                 )
             ]
         );
+
+        $rs->push($this->request = Request::create('http://example.com/base/path?foo=bar'));
     }
 
     public function test_url()

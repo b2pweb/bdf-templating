@@ -10,6 +10,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 class TestKernel extends Kernel
 {
@@ -35,6 +36,13 @@ class TestKernel extends Kernel
     {
         yield new FrameworkBundle();
         yield new BdfTemplatingBundle();
+    }
+
+    private function configureRoutes(RoutingConfigurator $routes): void
+    {
+        if (false !== ($fileName = (new \ReflectionObject($this))->getFileName())) {
+            $routes->import($fileName, 'attribute');
+        }
     }
 
     protected function configureContainer(ContainerConfigurator $container): void

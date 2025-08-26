@@ -21,10 +21,12 @@ class SessionTest extends TestCase
             null,
             [
                 new Session(
-                    new RequestStack([$this->request = Request::createFromGlobals()])
+                    $rs = new RequestStack()
                 ),
             ]
         );
+
+        $rs->push($this->request = Request::createFromGlobals());
     }
 
     public function test_session()
