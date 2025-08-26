@@ -1,0 +1,1 @@
+<html><?php $this->parts()->output(); ?></html>

@@ -1,0 +1,1 @@
+hello <?php echo isset($this->name) ? $this->name : ''; ?>

@@ -1,0 +1,1 @@
+hello <?php echo $this->partial('partial.part.php'); ?>

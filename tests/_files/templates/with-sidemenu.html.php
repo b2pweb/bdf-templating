@@ -1,0 +1,1 @@
+<?php $this->parts()->output('sidemenu'); ?> hello <?php $this->parts()->output(); ?>

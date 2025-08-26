@@ -1,0 +1,39 @@
+{
+  "name": "b2pweb/bdf-templating",
+  "description": "Bdf Templating component",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Bdf\\Templating\\": "src"
+    },
+    "files": [
+      "src/escaper.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Bdf\\Templating\\": "tests"
+    }
+  },
+  "minimum-stability": "dev",
+  "conflict": {
+    "b2p/bdf-templating": "*"
+  },
+  "require": {
+    "php": "~8.1",
+    "ext-mbstring": "*",
+    "laminas/laminas-escaper": "~2.0"
+  },
+  "require-dev": {
+    "psr/container": "~1.0|~2.0",
+    "psr/event-dispatcher": "~1.0",
+    "symfony/http-kernel": "~7.0",
+    "symfony/asset": "~7.0",
+    "symfony/translation": "~7.0",
+    "symfony/routing": "~7.0",
+    "phpunit/phpunit": "~10.0",
+    "php-di/php-di": "dev-master",
+    "symfony/framework-bundle": "7.4.x-dev"
+  }
+}
