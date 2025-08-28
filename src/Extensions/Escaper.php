@@ -129,10 +129,10 @@ trait Escaper
      *
      * @return mixed
      */
-    public function escape(mixed $value, string $context = 'html'): mixed
+    public function escape(mixed $value, string $context = 'html'): string
     {
         if (!is_string($value)) {
-            return $value;
+            return (string) $value;
         }
 
         $this->internalEscaper ??= new \Laminas\Escaper\Escaper($this->resolveCharset());

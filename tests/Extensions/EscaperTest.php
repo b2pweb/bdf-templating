@@ -30,7 +30,7 @@ class EscaperTest extends TestCase
      */
     public function test_dont_escape_non_string()
     {
-        $this->assertSame(1, $this->engine->escape(1));
+        $this->assertSame('1', $this->engine->escape(1));
     }
 
     /**

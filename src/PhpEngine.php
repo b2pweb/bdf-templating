@@ -36,8 +36,11 @@ class PhpEngine implements EngineInterface, ConfigurableViewInterface
 
     /**
      * The default view suffix
+     *
+     * @var string
+     * @fixme cannot use type hint because bdf mail override this property
      */
-    protected string $__viewSuffix = '.html.php';
+    protected /*string*/ $__viewSuffix = '.html.php';
 
     /**
      * The current vars set in render
@@ -153,7 +156,7 @@ class PhpEngine implements EngineInterface, ConfigurableViewInterface
      */
     public function setViewSuffix($viewSuffix): void
     {
-        $this->__viewSuffix = $viewSuffix;
+        $this->__viewSuffix = (string) $viewSuffix;
     }
 
     /**
