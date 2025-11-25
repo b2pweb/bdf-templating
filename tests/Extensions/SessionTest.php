@@ -8,10 +8,12 @@ use DI\Container;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 class SessionTest extends TestCase
 {
     private Request $request;
+    private PhpEngine $engine;
 
     protected function setUp(): void
     {
@@ -31,13 +33,13 @@ class SessionTest extends TestCase
 
     public function test_session()
     {
-        $this->request->setSession($session = new \Symfony\Component\HttpFoundation\Session\Session());
+        $this->request->setSession($session = new \Symfony\Component\HttpFoundation\Session\Session(new MockArraySessionStorage()));
         $this->assertSame($session, $this->engine->session());
     }
 
     public function test_flash()
     {
-        $this->request->setSession($session = new \Symfony\Component\HttpFoundation\Session\Session());
+        $this->request->setSession($session = new \Symfony\Component\HttpFoundation\Session\Session(new MockArraySessionStorage()));
         $this->assertSame($session->getFlashBag(), $this->engine->flash());
     }
 }

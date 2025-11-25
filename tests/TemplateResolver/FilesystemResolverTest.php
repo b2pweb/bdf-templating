@@ -35,7 +35,7 @@ class FilesystemResolverTest extends TestCase
     /**
      * @return array
      */
-    public function resolveProvider()
+    public static function resolveProvider()
     {
         $directory     = __DIR__ . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR;
         $subdirectory1 = $directory . 'folder1' . DIRECTORY_SEPARATOR;
@@ -65,7 +65,7 @@ class FilesystemResolverTest extends TestCase
     /**
      * @return array
      */
-    public function resolveExceptionsProvider()
+    public static function resolveExceptionsProvider()
     {
         $directory     = __DIR__ . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR;
         $subdirectory1 = $directory . 'folder1' . DIRECTORY_SEPARATOR;

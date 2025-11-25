@@ -38,7 +38,7 @@ return static function (ContainerConfigurator $container): void {
         ->args([
             service('service_container'),
             service(TemplateResolverInterface::class),
-            service_closure(FragmentHandler::class)->nullOnInvalid(),
+            service_closure('fragment.handler')->nullOnInvalid(),
             tagged_iterator('bdf.templating.extension'),
         ])
         ->call('setHelperNamespaces', [param('bdf.templating.helper_namespaces')])

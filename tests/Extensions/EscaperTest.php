@@ -51,7 +51,7 @@ class EscaperTest extends TestCase
     {
         $this->assertSame($value, $this->engine->e($key), 'Failed to escape: '.$key);
     }
-    public function htmlProvider()
+    public static function htmlProvider()
     {
         return [
             /* Encode chars as named entities where possible */
@@ -94,7 +94,7 @@ class EscaperTest extends TestCase
         $this->assertSame($value, $this->engine->eAttr($key), 'Failed to escape: '.$key);
         $this->assertSame($value, $this->engine->escapeAttr($key));
     }
-    public function htmlAttrProvider()
+    public static function htmlAttrProvider()
     {
         return [
             /* Encode chars as named entities where possible */
@@ -138,7 +138,7 @@ class EscaperTest extends TestCase
         $this->assertSame($value, $this->engine->escapeJs($key));
     }
 
-    public function jsProvider()
+    public static function jsProvider()
     {
         return [
             /* HTML special chars - escape without exception to hex */
@@ -180,7 +180,7 @@ class EscaperTest extends TestCase
         $this->assertSame($value, $this->engine->eCss($key), 'Failed to escape: '.$key);
         $this->assertSame($value, $this->engine->escapeCss($key));
     }
-    public function cssProvider()
+    public static function cssProvider()
     {
         return [
             /* HTML special chars - escape without exception to hex */
@@ -222,7 +222,7 @@ class EscaperTest extends TestCase
         $this->assertSame($value, $this->engine->eUrl($key), 'Failed to escape: '.$key);
         $this->assertSame($value, $this->engine->escapeUrl($key));
     }
-    public function urlProvider()
+    public static function urlProvider()
     {
         return [
             /* HTML special chars - escape without exception to percent encoding */

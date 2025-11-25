@@ -27,7 +27,7 @@ trait Asset
      */
     public function asset($assetName = null, $fallbackToDefault = true)
     {
-        if ($assetName !== null && $fallbackToDefault && ! $this->di->has("asset-${assetName}")) {
+        if ($assetName !== null && $fallbackToDefault && ! $this->di->has("asset-{$assetName}")) {
             $assetName = null;
         }
         

@@ -17,6 +17,7 @@ use Symfony\Component\Routing\RouteCollection;
 class UrlTest extends TestCase
 {
     private PhpEngine $engine;
+    private Request $request;
 
     protected function setUp(): void
     {
