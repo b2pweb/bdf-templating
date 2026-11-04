@@ -2,6 +2,7 @@
 
 namespace Bdf\Templating\Bundle\DependencyInjection;
 
+use Bdf\Templating\Helpers\HelperInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -16,6 +17,12 @@ class BdfTemplatingExtension extends Extension
 
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('bdf_templating.php');
+
+        $container
+            ->registerForAutoconfiguration(HelperInterface::class)
+            ->setPublic(true)
+            ->setShared(false)
+        ;
 
         $container->setParameter('bdf.templating.helper_namespaces', $config['helper_namespaces']);
         $container->setParameter('bdf.templating.view_default_layout', $config['default_layout']);

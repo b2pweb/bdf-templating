@@ -398,7 +398,7 @@ class PhpEngine implements EngineInterface, ConfigurableViewInterface
             })();
 
             $content = $this->filter(ob_get_clean());
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             ob_end_clean();
 
             $this->__vars = $__previousVars;
@@ -436,7 +436,7 @@ class PhpEngine implements EngineInterface, ConfigurableViewInterface
             require $this->resolveTemplate($__name);
 
             $content = ob_get_clean();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             ob_end_clean();
 
             throw $e;
