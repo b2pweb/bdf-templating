@@ -13,6 +13,17 @@ use Symfony\Component\HttpFoundation\Request;
 
 class BdfTemplatingBundleTest extends TestCase
 {
+    private const PAGE_ASSETS_HTML = <<<'HTML'
+<html>
+<head><link href="/page.css" type="text/css" rel="stylesheet" /></head>
+<body>
+<main><p>fragment</p>
+</main>
+<script src="/page.js" ></script><script src="/fragment.js" ></script></body>
+</html>
+
+HTML;
+
     private TestKernel $kernel;
 
     protected function setUp(): void
@@ -152,6 +163,22 @@ HTML
         // The flash message is consumed, but the session attribute is kept
         $response = $kernel->handle(Request::create('http://example.com/render/session', 'GET', [], $cookies));
         $this->assertSame("<p>User: Bob</p>\n", $response->getContent());
+    }
+
+    public function test_helpers_are_reset_between_requests()
+    {
+        // Handle multiple requests with the same kernel, like in worker mode (FrankenPHP, RoadRunner...)
+        // The js added by the fragment must be rendered by the page layout, and not be duplicated on the next request
+        $this->assertSame(self::PAGE_ASSETS_HTML, $this->kernel->handle(Request::create('http://example.com/render/page_assets'))->getContent());
+        $this->assertSame(self::PAGE_ASSETS_HTML, $this->kernel->handle(Request::create('http://example.com/render/page_assets'))->getContent());
+    }
+
+    public function test_helpers_are_reset_after_an_error()
+    {
+        $response = $this->kernel->handle(Request::create('http://example.com/render/error_assets'));
+        $this->assertSame(500, $response->getStatusCode());
+
+        $this->assertSame(self::PAGE_ASSETS_HTML, $this->kernel->handle(Request::create('http://example.com/render/page_assets'))->getContent());
     }
 
     private function createKernel(array $frameworkConfig = []): TestKernel

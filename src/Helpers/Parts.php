@@ -3,11 +3,13 @@
 namespace Bdf\Templating\Helpers;
 
 use function in_array;
+use function ob_end_clean;
+use function ob_get_level;
 
 /**
  * @package Bdf\Templating\Helpers
  */
-class Parts implements HelperInterface
+class Parts implements ResettableHelperInterface
 {
     /**
      * @var list<string>
@@ -25,6 +27,15 @@ class Parts implements HelperInterface
     public function getName(): string
     {
         return 'parts';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function reset(): void
+    {
+        $this->parts = [];
+        $this->openParts = [];
     }
 
     /**
