@@ -3,7 +3,11 @@
 namespace Bdf\Templating\Bundle;
 
 use Bdf\Templating\_files\TestKernel;
+use Bdf\Templating\Bundle\_files\BrokenNameHelper;
+use Bdf\Templating\Bundle\_files\CustomIdHelper;
+use Bdf\Templating\Bundle\_files\GreetingHelper;
 use Bdf\Templating\Bundle\_files\MyExtension;
+use Bdf\Templating\Helpers\Css;
 use Bdf\Templating\ConfigurableViewInterface;
 use Bdf\Templating\EngineInterface;
 use Bdf\Templating\PhpEngine;
@@ -181,6 +185,39 @@ HTML
         $this->assertSame(self::PAGE_ASSETS_HTML, $this->kernel->handle(Request::create('http://example.com/render/page_assets'))->getContent());
     }
 
+    public function test_helper_service_outside_helper_namespaces_is_declared_by_name()
+    {
+        $response = $this->kernel->handle(Request::create('http://example.com/render/greet_helper'));
+
+        $this->assertSame("<p>Hello Bob (42)</p>\n", $response->getContent());
+    }
+
+    public function test_helper_service_with_custom_id_is_declared_by_name()
+    {
+        $response = $this->kernel->handle(Request::create('http://example.com/render/custom_id_helper'));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame("<p>42</p>\n", $response->getContent());
+    }
+
+    public function test_helper_with_unresolvable_name_is_ignored()
+    {
+        // The kernel is booted, and other helpers still works
+        $this->assertSame('<p>Hello Bob (42)</p>'."\n", $this->kernel->getContainer()->get(EngineInterface::class)->render('greet_helper'));
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Helper "Broken" not found.');
+        $this->kernel->getContainer()->get(EngineInterface::class)->getHelper('broken');
+    }
+
+    public function test_helpers_are_not_shared()
+    {
+        $container = $this->kernel->getContainer();
+
+        $this->assertNotSame($container->get(Css::class), $container->get(Css::class));
+        $this->assertNotSame($container->get(GreetingHelper::class), $container->get(GreetingHelper::class));
+    }
+
     private function createKernel(array $frameworkConfig = []): TestKernel
     {
         $kernel = new TestKernel([
@@ -204,6 +241,12 @@ HTML
                 ;
 
                 $configurator->services()->set(MyExtension::class)->tag('bdf.templating.extension');
+
+                // Helpers outside the helper namespaces : must be declared on the engine by the bundle
+                $services = $configurator->services()->defaults()->autowire()->autoconfigure();
+                $services->set(GreetingHelper::class);
+                $services->set('app.custom_id_helper', CustomIdHelper::class);
+                $services->set(BrokenNameHelper::class);
             }
         ]);
         $kernel->boot();
