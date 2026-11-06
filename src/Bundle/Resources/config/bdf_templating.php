@@ -12,6 +12,7 @@ use Bdf\Templating\Helpers\Parts;
 use Bdf\Templating\PhpEngine;
 use Bdf\Templating\TemplateResolver\FilesystemResolver;
 use Bdf\Templating\TemplateResolver\TemplateResolverInterface;
+use Bdf\Templating\Test\TestEngine;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -41,6 +42,12 @@ return static function (ContainerConfigurator $container): void {
         ])
         ->call('setHelperNamespaces', [param('bdf.templating.helper_namespaces')])
         ->call('setDefaultLayout', [param('bdf.templating.view_default_layout')])
+    ;
+
+    $services
+        ->set(TestEngine::class)
+        ->args([service(PhpEngine::class)])
+        ->public()
     ;
 
     $services->set(FilesystemResolver::class)->args([param('bdf.templating.template_directory')]);

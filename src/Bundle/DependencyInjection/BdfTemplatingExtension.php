@@ -2,7 +2,9 @@
 
 namespace Bdf\Templating\Bundle\DependencyInjection;
 
+use Bdf\Templating\EngineInterface;
 use Bdf\Templating\Helpers\HelperInterface;
+use Bdf\Templating\Test\TestEngine;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -27,5 +29,12 @@ class BdfTemplatingExtension extends Extension
         $container->setParameter('bdf.templating.helper_namespaces', $config['helper_namespaces']);
         $container->setParameter('bdf.templating.view_default_layout', $config['default_layout']);
         $container->setParameter('bdf.templating.template_directory', $config['template_directory']);
+
+        if ($config['test']) {
+            $container
+                ->setAlias(EngineInterface::class, TestEngine::class)
+                ->setPublic(true)
+            ;
+        }
     }
 }

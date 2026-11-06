@@ -11,6 +11,7 @@ use Bdf\Templating\Helpers\Css;
 use Bdf\Templating\ConfigurableViewInterface;
 use Bdf\Templating\EngineInterface;
 use Bdf\Templating\PhpEngine;
+use Bdf\Templating\Test\TestEngine;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpFoundation\Request;
@@ -218,17 +219,78 @@ HTML
         $this->assertNotSame($container->get(GreetingHelper::class), $container->get(GreetingHelper::class));
     }
 
-    private function createKernel(array $frameworkConfig = []): TestKernel
+    public function test_test_engine_is_disabled_by_default()
+    {
+        $this->assertInstanceOf(PhpEngine::class, $this->kernel->getContainer()->get(EngineInterface::class));
+    }
+
+    public function test_test_engine_enabled_by_configuration()
+    {
+        $kernel = $this->createKernel(bdfConfig: ['test' => true]);
+        $container = $kernel->getContainer();
+
+        $engine = $container->get(EngineInterface::class);
+        $this->assertInstanceOf(TestEngine::class, $engine);
+        $this->assertSame($container->get(TestEngine::class), $engine);
+        $this->assertInstanceOf(PhpEngine::class, $engine->getEngine());
+    }
+
+    public function test_test_engine_records_rendered_views()
+    {
+        $kernel = $this->createKernel(bdfConfig: ['test' => true]);
+
+        $response = $kernel->handle(Request::create('http://example.com/render/greet_helper?foo=bar'));
+        $this->assertSame("<p>Hello Bob (42)</p>\n", $response->getContent());
+
+        /** @var TestEngine $engine */
+        $engine = $kernel->getContainer()->get(TestEngine::class);
+        $this->assertSame('greet_helper', $engine->getView());
+        $this->assertSame(['foo' => 'bar'], $engine->getParameters());
+
+        $kernel->handle(Request::create('http://example.com/render/route_helper'));
+        $this->assertSame('route_helper', $engine->getView());
+        $this->assertSame([
+            'greet_helper' => ['foo' => 'bar'],
+            'route_helper' => [],
+        ], $engine->getViews());
+    }
+
+    public function test_test_engine_with_render_disabled()
+    {
+        $kernel = $this->createKernel(bdfConfig: ['test' => true]);
+
+        /** @var TestEngine $engine */
+        $engine = $kernel->getContainer()->get(TestEngine::class);
+        $engine->setEnabledRender(false);
+        $engine->setDefaultRender('stub');
+
+        $response = $kernel->handle(Request::create('http://example.com/render/not_found?foo=bar'));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('stub', $response->getContent());
+        $this->assertSame('not_found', $engine->getView());
+        $this->assertSame(['foo' => 'bar'], $engine->getParameters());
+    }
+
+    public function test_test_engine_keeps_helpers_reset()
+    {
+        $kernel = $this->createKernel(bdfConfig: ['test' => true]);
+
+        $this->assertSame(self::PAGE_ASSETS_HTML, $kernel->handle(Request::create('http://example.com/render/page_assets'))->getContent());
+        $this->assertSame(self::PAGE_ASSETS_HTML, $kernel->handle(Request::create('http://example.com/render/page_assets'))->getContent());
+    }
+
+    private function createKernel(array $frameworkConfig = [], array $bdfConfig = []): TestKernel
     {
         $kernel = new TestKernel([
-            function (ContainerConfigurator $configurator) use ($frameworkConfig) {
+            function (ContainerConfigurator $configurator) use ($frameworkConfig, $bdfConfig) {
                 $configurator->extension('bdf_templating', [
                     'template_directory' => __DIR__.'/_files/templates',
                     'default_layout' => 'layout',
                     'helper_namespaces' => [
                         'Bdf\\Templating\\Bundle\\_files\\helpers'
                     ]
-                ]);
+                ] + $bdfConfig);
 
                 if ($frameworkConfig) {
                     $configurator->extension('framework', $frameworkConfig);
