@@ -6,6 +6,7 @@ use Bdf\Templating\_files\TestKernel;
 use Bdf\Templating\Bundle\_files\BrokenNameHelper;
 use Bdf\Templating\Bundle\_files\CustomIdHelper;
 use Bdf\Templating\Bundle\_files\GreetingHelper;
+use Bdf\Templating\Bundle\_files\MissingParentService;
 use Bdf\Templating\Bundle\_files\MyExtension;
 use Bdf\Templating\Helpers\Css;
 use Bdf\Templating\ConfigurableViewInterface;
@@ -278,6 +279,26 @@ HTML
 
         $this->assertSame(self::PAGE_ASSETS_HTML, $kernel->handle(Request::create('http://example.com/render/page_assets'))->getContent());
         $this->assertSame(self::PAGE_ASSETS_HTML, $kernel->handle(Request::create('http://example.com/render/page_assets'))->getContent());
+    }
+
+    public function test_services_with_missing_parent_class_should_be_ignored()
+    {
+        $kernel = new TestKernel([
+            function (ContainerConfigurator $configurator) {
+                $configurator->extension('bdf_templating', [
+                    'template_directory' => __DIR__.'/_files/templates',
+                ]);
+
+                $services = $configurator->services();
+                $services->set('missing_parent', MissingParentService::class);
+                $services->set(MyExtension::class)->autowire()->autoconfigure();
+                $services->set(GreetingHelper::class)->autowire()->autoconfigure();
+                $configurator->parameters()->set('missing_parent.class', MissingParentService::class);
+            }
+        ]);
+        $kernel->boot();
+
+        $this->assertInstanceOf(GreetingHelper::class, $kernel->getContainer()->get(GreetingHelper::class));
     }
 
     private function createKernel(array $frameworkConfig = [], array $bdfConfig = []): TestKernel

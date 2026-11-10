@@ -39,17 +39,17 @@ class BdfTemplatingBundle extends Bundle
                 foreach ($container->getDefinitions() as $id => $definition) {
                     $class = $definition->getClass();
 
-                    if ($class !== null && is_subclass_of($class, HelperInterface::class)) {
-                        if ($id !== $class && !$container->has($class)) {
-                            $container->setAlias($class, $id)->setPublic(true);
-                        }
+                    try {
+                        if ($class !== null && !$definition->isAbstract() && is_subclass_of($class, HelperInterface::class)) {
+                            if ($id !== $class && !$container->has($class)) {
+                                $container->setAlias($class, $id)->setPublic(true);
+                            }
 
-                        try {
                             $helperName = (new ReflectionClass($class))->newInstanceWithoutConstructor()->getName();
                             $engine->addMethodCall('declareHelper', [$helperName, $class]);
-                        } catch (Throwable) {
-                            // Ignore
                         }
+                    } catch (Throwable) {
+                        // Ignore
                     }
                 }
             }
