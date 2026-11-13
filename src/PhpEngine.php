@@ -8,6 +8,7 @@ use Bdf\Templating\Helpers\Css;
 use Bdf\Templating\Helpers\HelperInterface;
 use Bdf\Templating\Helpers\Js;
 use Bdf\Templating\Helpers\Parts;
+use Bdf\Templating\Helpers\ResettableHelperInterface;
 use Bdf\Templating\TemplateResolver\TemplateResolverInterface;
 use Closure;
 use Psr\Container\ContainerInterface;
@@ -17,6 +18,8 @@ use Symfony\Component\HttpKernel\Fragment\FragmentHandler;
 use function is_array;
 use function iterator_to_array;
 use function method_exists;
+use function ob_get_level;
+use function spl_object_id;
 
 class PhpEngine implements EngineInterface, ConfigurableViewInterface
 {
@@ -108,6 +111,12 @@ class PhpEngine implements EngineInterface, ConfigurableViewInterface
      * @var array<string, object|false>
      */
     private array $__extensionMethods = [];
+
+    /**
+     * The current rendering call depth.
+     * A value of zero means that the engine has no rendering in progress.
+     */
+    private int $__renderDepth = 0;
 
     public function __construct(
         protected readonly ContainerInterface $di,
@@ -389,34 +398,59 @@ class PhpEngine implements EngineInterface, ConfigurableViewInterface
         $this->__current = $__KEY__ = hash('sha256', $__FILE__);
         $this->__parents[$__KEY__] = null;
         $this->__vars = $parameters;
+        ++$this->__renderDepth;
 
         try {
-            ob_start();
+            try {
+                $__level = ob_get_level();
+                ob_start();
 
-            (function () use ($__FILE__) {
-                require $__FILE__;
-            })();
+                (function () use ($__FILE__) {
+                    require $__FILE__;
+                })();
 
-            $content = $this->filter(ob_get_clean());
-        } catch (\Exception $e) {
-            ob_end_clean();
+                $content = $this->filter(ob_get_clean());
+            } catch (\Throwable $e) {
+                while (ob_get_level() > $__level) {
+                    ob_end_clean();
+                }
 
+                throw $e;
+            }
+
+            if ($this->__parents[$__KEY__]) {
+                $parts = $this->getHelper('parts');
+
+                $__currentContent = $parts->get('_content', null);
+
+                $parts->set('_content', $content);
+                $content = $this->render($this->__parents[$__KEY__], $parameters);
+                $parts->set('_content', $__currentContent);
+            }
+        } finally {
             $this->__vars = $__previousVars;
+            --$this->__renderDepth;
 
-            throw $e;
+            if ($this->__renderDepth <= 0) {
+                $this->__current = '';
+                $this->__parents = [];
+
+                $resetted = [];
+
+                // Same helper is registered twice : one with its class name, and one with its name
+                // So we use a set to ensure that each helper is only resetted once.
+                foreach ($this->__helpers as $helper) {
+                    if ($helper instanceof ResettableHelperInterface) {
+                        $id = spl_object_id($helper);
+
+                        if (empty($resetted[$id])) {
+                            $helper->reset();
+                            $resetted[$id] = true;
+                        }
+                    }
+                }
+            }
         }
-
-        if ($this->__parents[$__KEY__]) {
-            $parts = $this->getHelper('parts');
-
-            $__currentContent = $parts->get('_content', null);
-
-            $parts->set('_content', $content);
-            $content = $this->render($this->__parents[$__KEY__], $parameters);
-            $parts->set('_content', $__currentContent);
-        }
-
-        $this->__vars = $__previousVars;
 
         return $content;
     }
@@ -436,7 +470,7 @@ class PhpEngine implements EngineInterface, ConfigurableViewInterface
             require $this->resolveTemplate($__name);
 
             $content = ob_get_clean();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             ob_end_clean();
 
             throw $e;

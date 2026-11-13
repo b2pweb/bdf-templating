@@ -17,6 +17,7 @@
     }
   },
   "minimum-stability": "dev",
+  "prefer-stable": true,
   "conflict": {
     "b2p/bdf-templating": "<1.9"
   },

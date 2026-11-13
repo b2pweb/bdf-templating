@@ -7,7 +7,10 @@ use Bdf\Templating\EngineInterface;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
@@ -74,5 +77,29 @@ class TestKernel extends Kernel
     public function string(EngineInterface $engine): string
     {
         return $engine->render('basic', ['name' => 'World']);
+    }
+
+    /**
+     * Render the given template, using query parameters as template variables
+     */
+    #[Route('/render/{template}', name: 'render', methods: ['GET'])]
+    public function renderTemplate(EngineInterface $engine, Request $request, string $template): Response
+    {
+        return new Response($engine->render($template, $request->query->all()));
+    }
+
+    /**
+     * Store a session attribute and a flash message, then redirect to the "session" template
+     */
+    #[Route('/session', methods: ['POST'])]
+    public function session(Request $request): Response
+    {
+        $session = $request->getSession();
+        assert($session instanceof FlashBagAwareSessionInterface);
+
+        $session->set('user', (string) $request->request->get('user'));
+        $session->getFlashBag()->add('success', (string) $request->request->get('flash'));
+
+        return new RedirectResponse('/render/session');
     }
 }

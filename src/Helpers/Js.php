@@ -10,7 +10,7 @@ use Symfony\Component\Asset\Packages;
 /**
  *
  */
-class Js implements HelperInterface
+class Js implements ResettableHelperInterface
 {
     /**
      * Contient la liste des tag script
@@ -42,6 +42,14 @@ class Js implements HelperInterface
     public function getName(): string
     {
         return 'js';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function reset(): void
+    {
+        $this->js = [];
     }
 
     /**

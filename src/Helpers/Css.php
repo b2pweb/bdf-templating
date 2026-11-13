@@ -10,7 +10,7 @@ use Symfony\Component\Asset\Packages;
 /**
  *
  */
-class Css implements HelperInterface
+class Css implements ResettableHelperInterface
 {
     /**
      * CSS Tags list
@@ -35,6 +35,14 @@ class Css implements HelperInterface
     public function getName(): string
     {
         return 'css';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function reset(): void
+    {
+        $this->css = [];
     }
 
     /**

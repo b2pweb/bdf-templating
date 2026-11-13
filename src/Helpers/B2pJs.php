@@ -5,7 +5,7 @@ namespace Bdf\Templating\Helpers;
 /**
  * B2pJs
  */
-class B2pJs implements HelperInterface
+class B2pJs implements ResettableHelperInterface
 {
     use \Bdf\Templating\Helpers\EngineAccessor;
 
@@ -42,6 +42,17 @@ class B2pJs implements HelperInterface
     public function getName(): string
     {
         return 'b2pJs';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function reset(): void
+    {
+        $this->configs = [];
+        $this->modules = [];
+        $this->buffer = '';
+        $this->onModulesReady = [];
     }
 
     /**

@@ -6,6 +6,7 @@ use Bdf\Templating\Asset\PathAsset;
 use Bdf\Templating\Filters\FilterInterface;
 use Bdf\Templating\Helpers\B2pJs;
 use Bdf\Templating\Helpers\HelperInterface;
+use Bdf\Templating\Helpers\ResettableHelperInterface;
 use Bdf\Templating\Helpers\TestHelper;
 use Bdf\Templating\TemplateResolver\FilesystemResolver;
 use DI\Container;
@@ -338,5 +339,151 @@ class PhpEngineTest extends TestCase
         );
 
         $this->assertSame('fragment content', $this->engine->fragment('/path'));
+    }
+
+    public function test_helpers_are_reset_after_render()
+    {
+        $expected = '<style type="text/css">.page {}</style><script>page();</script>';
+
+        $this->assertSame($expected, $this->engine->render('reset-assets'));
+        $this->assertTrue($this->engine->css()->isEmpty());
+        $this->assertTrue($this->engine->js()->isEmpty());
+
+        // The state of the previous render is not kept
+        $this->assertSame($expected, $this->engine->render('reset-assets'));
+    }
+
+    public function test_helpers_are_not_reset_by_nested_renders()
+    {
+        // The layout and the sub-template are rendered while the root template is still rendering,
+        // so the scripts added by the content and the sub-template must be available in the layout
+        $this->assertSame('sub|<script>content();</script><script>sub();</script>', $this->engine->render('reset-content'));
+        $this->assertTrue($this->engine->js()->isEmpty());
+    }
+
+    public function test_reset_is_called_once_per_root_render()
+    {
+        $this->engine->addHelper($helper = $this->resetCounterHelper());
+
+        // Contains a nested render and two layouts
+        $this->engine->render('multiple-render', ['name' => 'Doe']);
+        $this->assertSame(1, $helper->resets);
+
+        $this->engine->render('basic', ['name' => 'John']);
+        $this->assertSame(2, $helper->resets);
+    }
+
+    public function test_helper_state_defined_before_render_is_used_then_reset()
+    {
+        $this->engine->js()->appendTag('before();');
+
+        $this->assertSame('<script>before();</script>', $this->engine->render('reset-js'));
+        $this->assertTrue($this->engine->js()->isEmpty());
+    }
+
+    public function test_parts_are_reset_after_render()
+    {
+        $this->assertSame('item1 - item2 hello John', $this->engine->render('sidemenu', ['name' => 'John']));
+
+        $this->assertFalse($this->engine->parts()->get('sidemenu'));
+        $this->assertFalse($this->engine->parts()->get('_content'));
+    }
+
+    public function test_b2pjs_state_is_reset_after_render()
+    {
+        $this->engine->render('reset-use-module');
+
+        $this->assertSame('', $this->engine->render('reset-import-js'));
+    }
+
+    public function test_b2pjs_module_paths_are_kept_after_render()
+    {
+        // Module paths are a configuration of the helper, done once when the engine is created
+        $helper = new B2pJs();
+        $helper->registerPath(__DIR__.'/Helpers/_files/%s.js');
+        $this->engine->addHelper($helper);
+
+        $this->assertSame('<script>var tested=true;</script>', $this->engine->render('reset-module'));
+        $this->assertSame('<script>var tested=true;</script>', $this->engine->render('reset-module'));
+    }
+
+    public function test_state_is_reset_after_exception()
+    {
+        $this->engine->addHelper($helper = $this->resetCounterHelper());
+        $level = ob_get_level();
+
+        try {
+            $this->engine->render('reset-error', ['foo' => 'bar']);
+            $this->fail('An exception should be thrown');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Error in template', $e->getMessage());
+        }
+
+        $this->assertSame($level, ob_get_level());
+        $this->assertSame([], $this->engine->vars());
+        $this->assertSame(1, $helper->resets);
+        $this->assertTrue($this->engine->js()->isEmpty());
+
+        // The engine is still usable
+        $this->assertSame('<style type="text/css">.page {}</style><script>page();</script>', $this->engine->render('reset-assets'));
+        $this->assertSame(2, $helper->resets);
+    }
+
+    public function test_state_is_reset_after_exception_in_layout()
+    {
+        $this->engine->addHelper($helper = $this->resetCounterHelper());
+
+        try {
+            $this->engine->render('reset-error-in-layout');
+            $this->fail('An exception should be thrown');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Error in layout', $e->getMessage());
+        }
+
+        $this->assertSame(1, $helper->resets);
+        $this->assertTrue($this->engine->js()->isEmpty());
+
+        // Following renders must still reset the helpers
+        $this->engine->render('reset-assets');
+        $this->assertSame(2, $helper->resets);
+        $this->assertTrue($this->engine->js()->isEmpty());
+    }
+
+    public function test_state_is_reset_after_exception_in_part()
+    {
+        $level = ob_get_level();
+
+        try {
+            $this->engine->render('reset-error-in-part');
+            $this->fail('An exception should be thrown');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Error in part', $e->getMessage());
+        }
+
+        // Close the leaked buffers before asserting, to keep other tests clean
+        $leakedBuffers = ob_get_level() - $level;
+        while (ob_get_level() > $level) {
+            ob_end_clean();
+        }
+
+        $this->assertSame(0, $leakedBuffers, 'The output buffer opened by the part must be closed');
+        $this->assertFalse($this->engine->parts()->get('part'));
+    }
+
+    private function resetCounterHelper(): ResettableHelperInterface
+    {
+        return new class implements ResettableHelperInterface {
+            public int $resets = 0;
+
+            public function getName(): string
+            {
+                return 'resetCounter';
+            }
+
+            public function reset(): void
+            {
+                ++$this->resets;
+            }
+        };
     }
 }

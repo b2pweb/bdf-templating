@@ -20,6 +20,7 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->scalarNode('default_layout')->defaultValue('base')->end()
                 ->scalarNode('template_directory')->defaultValue('%kernel.project_dir%/templates')->end()
+                ->booleanNode('test')->defaultFalse()->end()
             ->end()
         ;
 
